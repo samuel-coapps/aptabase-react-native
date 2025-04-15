@@ -1,6 +1,6 @@
 import "vitest-fetch-mock";
 import { EventDispatcher } from "./dispatcher";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EnvironmentInfo } from "./env";
 
 const env: EnvironmentInfo = {
@@ -32,6 +32,11 @@ const expectEventsCount = async (
   expect(body.length).toEqual(expectedNumOfEvents);
 };
 
+const storageMock = {
+  getString: vi.fn(),
+  set: vi.fn()
+}
+
 describe("EventDispatcher", () => {
   let dispatcher: EventDispatcher;
 
@@ -39,7 +44,8 @@ describe("EventDispatcher", () => {
     dispatcher = new EventDispatcher(
       "A-DEV-000",
       "https://localhost:3000",
-      env
+      env,
+      storageMock
     );
     fetchMock.resetMocks();
   });

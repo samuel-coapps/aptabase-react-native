@@ -31,3 +31,8 @@ export type Event = {
   };
   props?: Record<string, string | number | boolean>;
 };
+
+export type Storage = {
+  set (key: string, value: string): void
+  getString (key: string): string
+}

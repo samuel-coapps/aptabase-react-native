@@ -1,47 +1,68 @@
-import type { Event } from "./types";
+import type { Event, Storage } from "./types";
 import { EnvironmentInfo } from "./env";
+
+const STORAGE_KEY = "APTABASE_REACT_NATIVE_EVENTS";
 
 export class EventDispatcher {
   private _events: Event[] = [];
   private MAX_BATCH_SIZE = 25;
   private headers: Headers;
   private apiUrl: string;
+  private storage: Storage;
+  private isFlushing: boolean = false;
 
-  constructor(appKey: string, baseUrl: string, env: EnvironmentInfo) {
+  constructor(appKey: string, baseUrl: string, env: EnvironmentInfo, storage: Storage) {
     this.apiUrl = `${baseUrl}/api/v0/events`;
     this.headers = new Headers({
       "Content-Type": "application/json",
       "App-Key": appKey,
       "User-Agent": `${env.osName}/${env.osVersion} ${env.locale}`,
     });
+    this.storage = storage;
+
+    try {
+      const storedEvents = storage.getString(STORAGE_KEY);
+      const restored = JSON.parse(storedEvents || "[]");
+      this._events = Array.isArray(restored) ? restored : [];
+    } catch (e) {
+      console.error(e);
+      this._events = [];
+    }
   }
 
   public enqueue(evt: Event | Event[]) {
     if (Array.isArray(evt)) {
       this._events.push(...evt);
-      return;
+    } else {
+      this._events.push(evt);
     }
 
-    this._events.push(evt);
+    const serializedEvents = JSON.stringify(this._events);
+    this.storage.set(STORAGE_KEY, serializedEvents);
   }
 
   public async flush(): Promise<void> {
-    if (this._events.length === 0) {
-      return Promise.resolve();
+    if (this.isFlushing || this._events.length === 0) {
+      return;
     }
+    this.isFlushing = true;
 
-    let failedEvents: Event[] = [];
-    do {
-      const eventsToSend = this._events.splice(0, this.MAX_BATCH_SIZE);
-      try {
-        await this._sendEvents(eventsToSend);
-      } catch {
-        failedEvents = [...failedEvents, ...eventsToSend];
+    try {
+      let failedEvents: Event[] = [];
+      do {
+        const eventsToSend = this._events.splice(0, this.MAX_BATCH_SIZE);
+        try {
+          await this._sendEvents(eventsToSend);
+        } catch {
+          failedEvents = [...failedEvents, ...eventsToSend];
+        }
+      } while (this._events.length > 0);
+
+      if (failedEvents.length > 0) {
+        this.enqueue(failedEvents);
       }
-    } while (this._events.length > 0);
-
-    if (failedEvents.length > 0) {
-      this.enqueue(failedEvents);
+    } finally {
+      this.isFlushing = false;
     }
   }
 
@@ -68,9 +89,7 @@ export class EventDispatcher {
 
       throw new Error(reason);
     } catch (e) {
-      console.error(
-        `Aptabase: Failed to send ${events.length} events. Reason: ${e}`
-      );
+      console.error(`Aptabase: Failed to send ${events.length} events. Reason: ${e}`);
       throw e;
     }
   }

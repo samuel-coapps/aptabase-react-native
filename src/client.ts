@@ -1,5 +1,5 @@
 import type { Platform } from "react-native";
-import type { AptabaseOptions } from "./types";
+import type { AptabaseOptions, Storage } from "./types";
 import type { EnvironmentInfo } from "./env";
 import { EventDispatcher } from "./dispatcher";
 import { newSessionId } from "./session";
@@ -12,7 +12,7 @@ export class AptabaseClient {
   private _lastTouched = new Date();
   private _flushTimer: NodeJS.Timeout | undefined;
 
-  constructor(appKey: string, env: EnvironmentInfo, options?: AptabaseOptions) {
+  constructor(appKey: string, storage: Storage, env: EnvironmentInfo, options?: AptabaseOptions) {
     const [_, region] = appKey.split("-");
     const baseUrl = this.getBaseUrl(region, options);
 
@@ -21,7 +21,7 @@ export class AptabaseClient {
       this._env.appVersion = options.appVersion;
     }
 
-    this._dispatcher = new EventDispatcher(appKey, baseUrl, env);
+    this._dispatcher = new EventDispatcher(appKey, baseUrl, env, storage);
   }
 
   public trackEvent(

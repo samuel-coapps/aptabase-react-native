@@ -1,4 +1,4 @@
-import type { AptabaseOptions } from "./types";
+import type { AptabaseOptions, Storage } from "./types";
 import { getEnvironmentInfo } from "./env";
 import { AppState, Platform } from "react-native";
 import { AptabaseClient } from "./client";
@@ -12,7 +12,7 @@ let _client: AptabaseClient | undefined;
  * @param {string} appKey - Aptabase App Key
  * @param {AptabaseOptions} options - Optional initialization parameters
  */
-export function init(appKey: string, options?: AptabaseOptions) {
+export function init(appKey: string, storage: Storage, options?: AptabaseOptions) {
   const [ok, msg] = validate(Platform.OS, appKey, options);
   if (!ok) {
     console.warn(`Aptabase: ${msg}. Tracking will be disabled.`);
@@ -20,7 +20,7 @@ export function init(appKey: string, options?: AptabaseOptions) {
   }
 
   const env = getEnvironmentInfo();
-  _client = new AptabaseClient(appKey, env, options);
+  _client = new AptabaseClient(appKey, storage, env, options);
 
   const flushInterval = options?.flushInterval ?? FLUSH_INTERVAL;
   _client.startPolling(flushInterval);

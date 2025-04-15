@@ -1,6 +1,6 @@
 import { init, trackEvent } from "./track";
 import { createContext, useEffect, type ReactNode } from "react";
-import { AptabaseOptions } from "./types";
+import { AptabaseOptions, Storage } from "./types";
 
 type ContextProps = {};
 
@@ -12,13 +12,14 @@ const AptabaseContext = createContext<ContextProps>({});
 
 type Props = {
   appKey: string;
+  storage: Storage;
   options?: AptabaseOptions;
   children: ReactNode;
 };
 
-export function AptabaseProvider({ appKey, options, children }: Props) {
+export function AptabaseProvider({ appKey, storage, options, children }: Props) {
   useEffect(() => {
-    init(appKey, options);
+    init(appKey, storage, options);
   }, [appKey, options]);
 
   return (

@@ -24,29 +24,21 @@ const expectRequestCount = (count: number) => {
   expect(fetchMock.requests().length).toEqual(count);
 };
 
-const expectEventsCount = async (
-  requestIndex: number,
-  expectedNumOfEvents: number
-) => {
+const expectEventsCount = async (requestIndex: number, expectedNumOfEvents: number) => {
   const body = await fetchMock.requests().at(requestIndex)?.json();
   expect(body.length).toEqual(expectedNumOfEvents);
 };
 
 const storageMock = {
   getString: vi.fn(),
-  set: vi.fn()
-}
+  set: vi.fn(),
+};
 
 describe("EventDispatcher", () => {
   let dispatcher: EventDispatcher;
 
   beforeEach(() => {
-    dispatcher = new EventDispatcher(
-      "A-DEV-000",
-      "https://localhost:3000",
-      env,
-      storageMock
-    );
+    dispatcher = new EventDispatcher("A-DEV-000", "https://localhost:3000", env, storageMock);
     fetchMock.resetMocks();
   });
 

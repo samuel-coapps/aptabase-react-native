@@ -13,6 +13,11 @@ const env: EnvironmentInfo = {
   sdkVersion: "aptabase-reactnative@1.0.0",
 };
 
+const storageMock = {
+  getString: vi.fn(),
+  set: vi.fn(),
+};
+
 describe("AptabaseClient", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -24,7 +29,7 @@ describe("AptabaseClient", () => {
   });
 
   it("should allow override of appVersion", async () => {
-    const client = new AptabaseClient("A-DEV-000", env, {
+    const client = new AptabaseClient("A-DEV-000", storageMock, env, {
       appVersion: "2.0.0",
     });
 
@@ -37,7 +42,7 @@ describe("AptabaseClient", () => {
   });
 
   it("should send event with correct props", async () => {
-    const client = new AptabaseClient("A-DEV-000", env);
+    const client = new AptabaseClient("A-DEV-000", storageMock, env);
 
     client.trackEvent("test", { count: 1, foo: "bar" });
     await client.flush();
@@ -49,7 +54,7 @@ describe("AptabaseClient", () => {
   });
 
   it("should flush events every 500ms", async () => {
-    const client = new AptabaseClient("A-DEV-000", env);
+    const client = new AptabaseClient("A-DEV-000", storageMock, env);
     client.startPolling(500);
 
     client.trackEvent("Hello1");
@@ -61,6 +66,7 @@ describe("AptabaseClient", () => {
 
     // after another tick, nothing should be sent
     vi.advanceTimersByTime(510);
+    await vi.runOnlyPendingTimersAsync();
     expect(fetchMock.requests().length).toEqual(1);
 
     // after a trackEvent and another tick, the event should be sent
@@ -72,7 +78,7 @@ describe("AptabaseClient", () => {
   });
 
   it("should stop flush if polling stopped", async () => {
-    const client = new AptabaseClient("A-DEV-000", env);
+    const client = new AptabaseClient("A-DEV-000", storageMock, env);
     client.startPolling(500);
 
     client.trackEvent("Hello1");
@@ -88,7 +94,7 @@ describe("AptabaseClient", () => {
   });
 
   it("should generate new session after long period of inactivity", async () => {
-    const client = new AptabaseClient("A-DEV-000", env);
+    const client = new AptabaseClient("A-DEV-000", storageMock, env);
 
     client.trackEvent("Hello1");
     await client.flush();

@@ -6,6 +6,7 @@ const STORAGE_KEY = "APTABASE_REACT_NATIVE_EVENTS";
 export class EventDispatcher {
   private _events: Event[] = [];
   private MAX_BATCH_SIZE = 25;
+  private MAX_BATCHES_TO_LOAD = 100;
   private headers: Headers;
   private apiUrl: string;
   private storage: Storage;
@@ -23,7 +24,9 @@ export class EventDispatcher {
     try {
       const storedEvents = storage.getString(STORAGE_KEY);
       const restored = JSON.parse(storedEvents || "[]");
-      this._events = Array.isArray(restored) ? restored : [];
+      this._events = Array.isArray(restored)
+        ? restored.slice(-this.MAX_BATCH_SIZE * this.MAX_BATCHES_TO_LOAD)
+        : [];
     } catch (e) {
       console.error(e);
       this._events = [];

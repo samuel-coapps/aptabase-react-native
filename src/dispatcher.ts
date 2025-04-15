@@ -92,7 +92,7 @@ export class EventDispatcher {
 
       throw new Error(reason);
     } catch (e) {
-      console.error(`Aptabase: Failed to send ${events.length} events. Reason: ${e}`);
+      console.log(`Aptabase: Failed to send ${events.length} events. Reason: ${e}`);
       throw e;
     }
   }
